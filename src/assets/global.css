@@ -1,0 +1,61 @@
+:root {
+  --bg-workspace: #05060a;
+  --bg-sidebar: #0d0e15;
+  --bg-card: #0d0f19;
+  --bg-item-hover: #161824;
+  --bg-active: #1e2235;
+  --bg-input: #040508;
+
+  --text-primary: #f1f5f9;
+  --text-muted: #64748b;
+  --text-metrics: #475569;
+
+  --tech-cyan: #38bdf8;
+  --status-online: #22c55e;
+  --status-idle: #eab308;
+  --status-offline: #ef4444;
+
+  --border-color: #1e293b;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-workspace);
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  display: flex;
+  /* Сетка приложения: Сайдбар + Контент */
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Настройки для основного контейнера, куда импортируются экраны */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  background-color: var(--bg-workspace);
+}
+
+.workspace-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Красивый кастомный скроллбар для всей системы */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}

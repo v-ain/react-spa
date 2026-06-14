@@ -1,0 +1,59 @@
+[
+  {
+    "id": "git-visualizer",
+    "name": "GitVisualizer",
+    "prefix": "[sys_ok]",
+    "status": "online",
+    "desc": "Реалтайм индексация структуры репозитория",
+    "metrics": {
+      "time": "14ms",
+      "memory": "4.2MB",
+      "load": "low",
+      "filesCount": "14,204",
+      "extra": "Пинг до узла: 23ms"
+    },
+    "tags": ["PID: 4012", "v2.1"],
+    "path": "ROOT // CORE // GitVisualizer",
+    "tabs": [
+      {
+        "name": "repository_map.json",
+        "type": "code",
+        "lines": [
+          "const initializeModule = (id) => {",
+          "    console.log(\"Connecting to structural node...\");",
+          "    return Core.fetchIndex(id || \"sys_root\");",
+          "};"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "linter-core",
+    "name": "LinterCore",
+    "prefix": "[sec_sh]",
+    "status": "online",
+    "desc": "Статический фоновый анализ уязвимостей кода",
+    "metrics": {
+      "time": "240ms",
+      "memory": "18.2MB",
+      "load": "high",
+      "filesCount": "3,411",
+      "extra": "Повышенная нагрузка на поток"
+    },
+    "tags": ["THREAD_#2"],
+    "path": "ROOT // SECURITY // LinterCore",
+    "tabs": [
+      {
+        "name": "rules.json",
+        "type": "code",
+        "lines": [
+          "{",
+          "    \"no-unused-vars\": \"error\",",
+          "    \"no-console\": \"warn\"",
+          "}"
+        ]
+      }
+    ]
+  }
+]
+

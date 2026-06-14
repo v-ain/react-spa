@@ -1,0 +1,102 @@
+:root {
+  --bg-matrix: #030407;
+  /* Сверхглубокий черный */
+  --bg-panel: #090a0f;
+  /* Фон консолей */
+  --bg-surface: #0f111a;
+  /* Фон карточек и вкладок */
+  --bg-terminal: #040508;
+  /* Цвет полей ввода и консоли логов */
+
+  --text-neon: #38bdf8;
+  /* Кибернетический голубой */
+  --text-bright: #f1f5f9;
+  /* Основной текст */
+  --text-dimmed: #475569;
+  /* Приглушенные технические логи */
+  --text-muted: #64748b;
+  /* Комментарии и описания */
+
+  --cyber-green: #22c55e;
+  /* Статус ONLINE */
+  --cyber-amber: #eab308;
+  /* Статус IDLE / WARN */
+  --cyber-red: #ef4444;
+  /* Статус OFFLINE / ERROR */
+
+  --matrix-border: #1e293b;
+  /* Строгая сетка 1px */
+}
+
+/* Базовый сброс и хакерский шрифт */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-matrix);
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+  color: var(--text-bright);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  /* Декоративная сетка на фоне всего приложения */
+  background-image:
+    linear-gradient(rgba(30, 41, 59, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 59, 0.15) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Жесткая сетка 35/65 (Сайдбар зафиксирован, контент резиновый) */
+.app-grid-core {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Слой основного контента справа */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  border-left: 1px solid var(--matrix-border);
+}
+
+.workspace-viewport {
+  padding: 24px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Анимация пульсации для онлайн-маркеров */
+@keyframes cyber-pulse {
+  0% {
+    box-shadow: 0 0 4px var(--cyber-green);
+  }
+
+  50% {
+    box-shadow: 0 0 12px var(--cyber-green);
+  }
+
+  100% {
+    box-shadow: 0 0 4px var(--cyber-green);
+  }
+}
+
+.pulse-node {
+  animation: cyber-pulse 2s infinite ease-in-out;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--matrix-border);
+  border-radius: 2px;
+}
