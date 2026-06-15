@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { SubsystemModule } from '../types/system';
+import TopologyMap from './ui/TopologyMap';
 
 // Контракт входящих параметров (Props)
 interface KernelConfigProps {
   subsystems: SubsystemModule[];
   onUpdateSubsystem: (id: string, updatedFields: Partial<SubsystemModule>) => Promise<void>;
   onLogAction: (msg: string, type: 'SUCCESS' | 'WARN') => void;
+  overloadedModuleId: string | null; // Добавили проп перегрузки
 }
 
-export default function KernelConfig({ subsystems, onUpdateSubsystem, onLogAction }: KernelConfigProps) {
+export default function KernelConfig({ subsystems, onUpdateSubsystem, onLogAction, overloadedModuleId }: KernelConfigProps) {
   // Глобальные настройки ядра (Лимиты), которые мы тоже можем крутить
   const [maxRam, setMaxRam] = useState<number>(512);
   const [tickRate, setTickRate] = useState<number>(2500);
@@ -177,7 +179,14 @@ export default function KernelConfig({ subsystems, onUpdateSubsystem, onLogActio
             ))}
           </tbody>
         </table>
-
+        {/* ВСТАВЛЯЕМ ЖИВУЮ КАРТУ СЕТИ СЮДА */}
+        <div style={{ marginTop: '20px', flexGrow: 1 }}>
+          <TopologyMap
+            subsystems={subsystems}
+            overloadedModuleId={overloadedModuleId}
+            onNodeClick={(id) => onLogAction(`MESH_QUERY: Запрос сетевых пакетов узла [${id}] -> Статус шины: STABLE. Пинг: 12ms.`, 'SUCCESS')}
+          />
+        </div>
         {/* Блок системного статуса ядра */}
         <div style={{ marginTop: 'auto', padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>

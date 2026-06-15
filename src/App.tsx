@@ -362,6 +362,7 @@ export default function App() {
               subsystems={modules} // Передаем актуальный стейт подсистем
               onUpdateSubsystem={handleUpdateSubsystemFields} // Передаем триггер API-обновления
               onLogAction={handleLogSystemAction} // Передаем логгер
+              overloadedModuleId={overloadedModuleId}
             />
           )}
 
