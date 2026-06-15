@@ -157,6 +157,29 @@ export default function App() {
     }
   };
 
+  const handleUpdateSubsystemCode = async (id: string, tabIdx: number, newLines: string[]) => {
+    try {
+      // 1. Отправляем в наше асинхронное API (запись в localStorage)
+      await SystemAPI.updateSubsystemCode(id, tabIdx, newLines);
+
+      // 2. Синхронизируем состояние React
+      setModules(prevModules =>
+        prevModules.map(mod => {
+          if (mod.id === id) {
+            const updatedTabs = [...mod.tabs];
+            if (updatedTabs[tabIdx]) {
+              updatedTabs[tabIdx] = { ...updatedTabs[tabIdx]!, lines: newLines };
+            }
+            return { ...mod, tabs: updatedTabs };
+          }
+          return mod;
+        })
+      );
+    } catch (error) {
+      console.error("Не удалось скомпилировать патч кода:", error);
+    }
+  };
+
   // Вспомогательная функция для быстрой инжекции логов из дочерних компонентов
   const handleLogSystemAction = (msg: string, type: 'SUCCESS' | 'WARN') => {
     const timeStr = new Date().toTimeString().split(' ')[0];
@@ -288,8 +311,9 @@ export default function App() {
               activeModule={activeModule}
               activeTabIdx={activeTabIdx}
               onTabChange={setActiveTabIdx}
-              onUpdateSubsystem={handleUpdateSubsystemFields} // Тот же самый метод, что использует KernelConfig!
-              onLogAction={handleLogSystemAction} // Тот же сквозной логгер
+              onUpdateSubsystem={handleUpdateSubsystemFields}
+              onUpdateSubsystemCode={handleUpdateSubsystemCode} // Наш новый проп!
+              onLogAction={handleLogSystemAction}
             />
           ) : (
             <KernelConfig

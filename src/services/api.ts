@@ -55,5 +55,31 @@ export const SystemAPI = {
     await delay(400); // Имитируем очистку секторов диска
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(LOGS_KEY);
+  },
+
+  /**
+   * Сохранить пропатченный код вкладки (PATCH /api/subsystems/:id/code)
+   */
+  async updateSubsystemCode(id: string, tabIdx: number, newLines: string[]): Promise<SubsystemModule> {
+    await delay(200); // Имитируем компиляцию и деплой патча
+    const list = await this.getSubsystems();
+
+    const updatedList = list.map(item => {
+      if (item.id === id) {
+        // Клонируем табы и подменяем строки в конкретном табе
+        const updatedTabs = [...item.tabs];
+        if (updatedTabs[tabIdx]) {
+          updatedTabs[tabIdx] = { ...updatedTabs[tabIdx]!, lines: newLines };
+        }
+        return { ...item, tabs: updatedTabs };
+      }
+      return item;
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+
+    const target = updatedList.find(item => item.id === id);
+    if (!target) throw new Error(`Subsystem [${id}] не найдена.`);
+    return target;
   }
 };
