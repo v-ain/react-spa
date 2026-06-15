@@ -10,6 +10,7 @@ import './assets/global.css'
 import './assets/style.css'
 import './assets/panel.style.css'
 import './assets/terminal.style.css'
+import './assets/stat-card.style.css'
 // Импорт изолированных компонентов
 import LandingPage from './components/LandingGate';
 import Sidebar from './components/Sidebar';

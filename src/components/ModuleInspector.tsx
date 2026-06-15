@@ -1,5 +1,7 @@
 import React from 'react';
 import { SubsystemModule } from '../types/system';
+import Sparkline from './ui/Sparkline';
+
 
 interface ModuleInspectorProps {
   activeModule: SubsystemModule;
@@ -43,52 +45,59 @@ export default function ModuleInspector({
 
   const isModuleOnline = activeModule.status === 'online';
 
+  const isOnline = activeModule.status === 'online';
+
+  // Парсим числовое значение RAM для скармливания графику (например, "4.2MB" -> 4.2)
+  const ramNumeric = parseFloat(activeModule.metrics.memory) || 0;
+
+  // Генерируем псевдо-число для графика нагрузки на основе текстового типа нагрузки
+  const loadNumeric = activeModule.metrics.load === 'high' ? 14.5 : activeModule.metrics.load === 'medium' ? 4.1 : 0.8;
+
+
   return (
     <>
       {/* СЕТКА СИСТЕМНЫХ МЕТРИК (С ИНТЕРАКТИВНЫМ УПРАВЛЕНИЕМ) */}
       <section className="stats-grid">
 
-        {/* Карточка 1: Индексные файлы */}
+        {/* Карточка 1: Файлы */}
         <div className="stat-card">
-          <span className="stat-label">Total Index Files</span>
-          <span className="stat-value cyan">
-            {isModuleOnline ? activeModule.metrics.filesCount : '0'}
-          </span>
-          <span className="stat-subtext">Реестр локального кэша</span>
-        </div>
-
-        {/* Карточка 2: Выделение памяти (Шевелится на лету!) */}
-        <div className="stat-card">
-          <span className="stat-label">Heap Allocation</span>
-          <span className="stat-value">
-            {activeModule.metrics.memory}
-          </span>
-          <span className="stat-subtext">Динамический пул RAM</span>
-        </div>
-
-        {/* Карточка 3: Интерактивный рубильник питания питания */}
-        <div className="stat-card" style={{ borderColor: isModuleOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="stat-label">Subsystem Power</span>
-            <button
-              type="button"
-              className="tech-badge"
-              style={{
-                cursor: 'pointer',
-                background: 'none',
-                borderColor: isModuleOnline ? 'var(--status-online)' : 'var(--status-offline)',
-                color: isModuleOnline ? 'var(--status-online)' : 'var(--status-offline)',
-                fontSize: '9px'
-              }}
-              onClick={handleTogglePower}
-            >
-              {isModuleOnline ? '[SHUTDOWN]' : '[INITIALIZE]'}
-            </button>
+          <div style={{ flexGrow: 1 }}>
+            <span className="stat-label">Total Index Files</span>
+            <span className="stat-value cyan">{isOnline ? activeModule.metrics.filesCount : '0'}</span>
           </div>
-          <span className={`stat-value ${isModuleOnline ? 'green' : ''}`} style={{ color: !isModuleOnline ? 'var(--status-offline)' : '' }}>
-            {activeModule.status.toUpperCase()}
-          </span>
-          <span className="stat-subtext">{isModuleOnline ? activeModule.metrics.extra : 'Пул потоков остановлен'}</span>
+          {/* Статичный график для файлов */}
+          <Sparkline value={isOnline ? parseInt(activeModule.metrics.filesCount) : 0} isOnline={isOnline} color="var(--tech-cyan)" />
+        </div>
+
+        {/* Карточка 2: Живая RAM (График дышит вместе с интервалом в App.tsx!) */}
+        <div className="stat-card">
+          <div style={{ flexGrow: 1 }}>
+            <span className="stat-label">Heap Allocation</span>
+            <span className="stat-value">{activeModule.metrics.memory}</span>
+          </div>
+          <Sparkline value={ramNumeric} isOnline={isOnline} color="#38bdf8" />
+        </div>
+
+        {/* Карточка 3: Нагрузка CPU / Статус */}
+        <div className="stat-card" style={{ borderColor: isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}>
+          <div style={{ flexGrow: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'right', paddingRight: '10px' }}>
+              <span className="stat-label">CPU Pulse</span>
+              <button
+                type="button"
+                className="tech-badge"
+                style={{ cursor: 'pointer', background: 'none', fontSize: '9px', borderColor: isOnline ? 'var(--status-online)' : 'var(--status-offline)', color: isOnline ? 'var(--status-online)' : 'var(--status-offline)' }}
+                onClick={handleTogglePower}
+              >
+                {isOnline ? '[SHUTDOWN]' : '[INITIALIZE]'}
+              </button>
+            </div>
+            <span className={`stat-value ${isOnline ? 'green' : ''}`} style={{ color: !isOnline ? 'var(--status-offline)' : '' }}>
+              {isOnline ? `${loadNumeric}%` : 'OFFLINE'}
+            </span>
+          </div>
+          {/* Зеленый или красный график пульса процессора */}
+          <Sparkline value={isOnline ? loadNumeric : 0} isOnline={isOnline} color={isOnline ? 'var(--status-online)' : 'var(--status-offline)'} />
         </div>
 
       </section>
