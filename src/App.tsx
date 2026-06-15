@@ -28,6 +28,8 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [cliInput, setCliInput] = useState<string>('');
 
+  const [overloadedModuleId, setOverloadedModuleId] = useState<string | null>(null);
+
   const handleCliSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const command = cliInput.trim().toLowerCase();
@@ -61,6 +63,7 @@ export default function App() {
           { time: timeStr[0], type: 'SUCCESS' as const, msg: "HELP_MENU: Доступные директивы ядра:" },
           { time: timeStr[0], type: 'SUCCESS' as const, msg: "  clear               - Полный сброс LocalStorage и перезапуск" },
           { time: timeStr[0], type: 'SUCCESS' as const, msg: "  sys_info            - Выгрузить статус аппаратных прерываний" },
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: "  stress_test <id>    - Симуляция пиковой нагрузки на подсистему" },
           { time: timeStr[0], type: 'SUCCESS' as const, msg: "  power_off <id>      - Аварийное отключение подсистемы (offline)" }
         );
         setGlobalLogs(updatedLogs);
@@ -78,8 +81,46 @@ export default function App() {
         break;
 
       default:
-        // Если команда не распознана
-        if (command.startsWith('power_off ')) {
+
+        // Обработка параметрических команд
+        if (command.startsWith('stress_test ')) {
+          const targetId = command.replace('stress_test ', '').trim();
+          const targetMod = modules.find(m => m.id === targetId);
+
+          if (!targetMod) {
+            // Исправлено: передаем строку timeStr[0], а не весь массив
+            updatedLogs.push({ time: timeStr[0]!, type: 'ERROR' as const, msg: `CLI_ERROR: Подсистема [${targetId}] не найдена.` });
+          } else if (targetMod.status !== 'online') {
+            updatedLogs.push({ time: timeStr[0]!, type: 'WARN' as const, msg: `CLI_WARN: Невозможно запустить тест. Подсистема [${targetId}] отключена.` });
+          } else {
+            // Инициализируем перегрузку
+            setOverloadedModuleId(targetId);
+            updatedLogs.push(
+              { time: timeStr[0]!, type: 'WARN' as const, msg: `ATTENTION: Запущен высокочастотный стресс-тест для [${targetId}]...` },
+              { time: timeStr[0]!, type: 'WARN' as const, msg: `WARN_ALERT: Выделение аварийных потоков памяти: +900MB Heap Allocation.` }
+            );
+
+            // Таймер автоматического восстановления системы через 5 секунд
+            setTimeout(() => {
+              setOverloadedModuleId(null); // Снимаем аварийный флаг
+              const finishTime = new Date().toTimeString().split(' ');
+
+              setGlobalLogs(prev => {
+                const finalLogs = [
+                  ...prev,
+                  { time: finishTime[0]!, type: 'SUCCESS' as const, msg: `WATCHDOG: Сработал автоматический предохранитель ядра.` },
+                  { time: finishTime[0]!, type: 'SUCCESS' as const, msg: `SYS_STABLE: Потоки подсистемы [${targetId}] успешно стабилизированы.` }
+                ];
+                SystemAPI.saveLogs(finalLogs); // Сохраняем в localStorage стабильное состояние
+                return finalLogs;
+              });
+            }, 5000);
+          }
+          setGlobalLogs(updatedLogs);
+          await SystemAPI.saveLogs(updatedLogs);
+        }
+        // ... ваш прошлый код проверки power_off ...
+        else if (command.startsWith('power_off ')) {
           const targetId = command.replace('power_off ', '').trim();
           const exists = modules.some(m => m.id === targetId);
 
@@ -314,6 +355,7 @@ export default function App() {
               onUpdateSubsystem={handleUpdateSubsystemFields}
               onUpdateSubsystemCode={handleUpdateSubsystemCode} // Наш новый проп!
               onLogAction={handleLogSystemAction}
+              overloadedModuleId={overloadedModuleId}
             />
           ) : (
             <KernelConfig

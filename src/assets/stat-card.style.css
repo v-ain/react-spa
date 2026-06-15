@@ -33,3 +33,25 @@
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
 }
+
+
+@keyframes alarmBlink {
+  0% {
+    border-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0);
+  }
+
+  50% {
+    border-color: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+  }
+
+  100% {
+    border-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0);
+  }
+}
+
+.stat-card.alarm-blink {
+  animation: alarmBlink 1s infinite ease-in-out;
+}

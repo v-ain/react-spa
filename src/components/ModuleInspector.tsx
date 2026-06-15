@@ -9,6 +9,8 @@ interface ModuleInspectorProps {
   onUpdateSubsystem: (id: string, updatedFields: Partial<SubsystemModule>) => Promise<void>;
   onUpdateSubsystemCode: (id: string, tabIdx: number, newLines: string[]) => Promise<void>;
   onLogAction: (msg: string, type: 'SUCCESS' | 'WARN' | 'ERROR') => void;
+
+  overloadedModuleId: string | null;
 }
 
 export default function ModuleInspector({
@@ -17,12 +19,17 @@ export default function ModuleInspector({
   onTabChange,
   onUpdateSubsystem,
   onUpdateSubsystemCode,
-  onLogAction
+  onLogAction,
+  overloadedModuleId
 }: ModuleInspectorProps) {
 
   const isOnline = activeModule.status === 'online';
+  const isOverloaded = overloadedModuleId === activeModule.id;
   const ramNumeric = parseFloat(activeModule.metrics.memory) || 0;
-  const loadNumeric = activeModule.metrics.load === 'high' ? 14.5 : activeModule.metrics.load === 'medium' ? 4.1 : 0.8;
+  // Если стресс-тест — выставляем пиковую нагрузку CPU
+  const loadNumeric = isOverloaded
+    ? 98.4
+    : (activeModule.metrics.load === 'high' ? 14.5 : activeModule.metrics.load === 'medium' ? 4.1 : 0.8);
 
   // --- ЛОКАЛЬНЫЙ СТЕЙТ ДЛЯ ИНЖЕКТОРА КОДА ---
   const [editableLines, setEditableLines] = useState<string[]>([]);
@@ -89,41 +96,59 @@ export default function ModuleInspector({
     <div onKeyDown={handleKeyDown}>
       {/* СЕТКА СИСТЕМНЫХ МЕТРИК */}
       <section className="stats-grid">
-        <div className="stat-card">
+
+        {/* Карточка 1: Файлы */}
+        <div className="stat-card" style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}>
           <div style={{ flexGrow: 1 }}>
             <span className="stat-label">Total Index Files</span>
             <span className="stat-value cyan">{isOnline ? activeModule.metrics.filesCount : '0'}</span>
           </div>
-          <Sparkline value={isOnline ? parseInt(activeModule.metrics.filesCount) : 0} isOnline={isOnline} color="var(--tech-cyan)" />
+          <Sparkline value={isOnline ? parseInt(activeModule.metrics.filesCount) : 0} isOnline={isOnline} isOverloaded={isOverloaded} color="var(--tech-cyan)" />
         </div>
 
-        <div className="stat-card">
+        {/* Карточка 2: Оперативная память */}
+        <div className="stat-card" style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}>
           <div style={{ flexGrow: 1 }}>
             <span className="stat-label">Heap Allocation</span>
-            <span className="stat-value">{activeModule.metrics.memory}</span>
+            <span className="stat-value" style={{ color: isOverloaded ? 'var(--status-offline)' : '' }}>
+              {isOverloaded ? '942.1 MB' : activeModule.metrics.memory}
+            </span>
           </div>
-          <Sparkline value={ramNumeric} isOnline={isOnline} color="#38bdf8" />
+          <Sparkline value={isOverloaded ? 942 : ramNumeric} isOnline={isOnline} isOverloaded={isOverloaded} color="#38bdf8" />
         </div>
 
-        <div className="stat-card" style={{ borderColor: isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)' }}>
+        {/* Карточка 3: CPU Pulse с анимацией тревожного мигания */}
+        <div
+          className={`stat-card ${isOverloaded ? 'alarm-blink' : ''}`}
+          style={{
+            transition: 'all 0.3s',
+            borderColor: isOverloaded ? 'var(--status-offline)' : (isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
+            background: isOverloaded ? 'rgba(239, 68, 68, 0.02)' : ''
+          }}
+        >
           <div style={{ flexGrow: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '10px' }}>
-              <span className="stat-label">CPU Pulse</span>
-              <button
-                type="button"
-                className="tech-badge"
-                style={{ cursor: 'pointer', background: 'none', fontSize: '9px', borderColor: isOnline ? 'var(--status-online)' : 'var(--status-offline)', color: isOnline ? 'var(--status-online)' : 'var(--status-offline)' }}
-                onClick={handleTogglePower}
-              >
-                {isOnline ? '[SHUTDOWN]' : '[INITIALIZE]'}
-              </button>
+              <span className="stat-label" style={{ color: isOverloaded ? 'var(--status-offline)' : '' }}>
+                {isOverloaded ? 'CRIT_OVERLOAD' : 'CPU Pulse'}
+              </span>
+              {!isOverloaded && (
+                <button
+                  type="button"
+                  className="tech-badge"
+                  style={{ cursor: 'pointer', background: 'none', fontSize: '9px', borderColor: isOnline ? 'var(--status-online)' : 'var(--status-offline)', color: isOnline ? 'var(--status-online)' : 'var(--status-offline)' }}
+                  onClick={handleTogglePower}
+                >
+                  {isOnline ? '[SHUTDOWN]' : '[INITIALIZE]'}
+                </button>
+              )}
             </div>
-            <span className={`stat-value ${isOnline ? 'green' : ''}`} style={{ color: !isOnline ? 'var(--status-offline)' : '' }}>
+            <span className="stat-value" style={{ color: isOverloaded || !isOnline ? 'var(--status-offline)' : 'var(--status-online)' }}>
               {isOnline ? `${loadNumeric}%` : 'OFFLINE'}
             </span>
           </div>
-          <Sparkline value={isOnline ? loadNumeric : 0} isOnline={isOnline} color={isOnline ? 'var(--status-online)' : 'var(--status-offline)'} />
+          <Sparkline value={isOnline ? loadNumeric : 0} isOnline={isOnline} isOverloaded={isOverloaded} color="var(--status-online)" />
         </div>
+
       </section>
 
       {/* ОСНОВНАЯ ПАНЕЛЬ С ИНЖЕКТОРОМ КОДА */}
