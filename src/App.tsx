@@ -9,6 +9,7 @@ import './assets/header.style.css'
 import './assets/global.css'
 import './assets/style.css'
 import './assets/panel.style.css'
+import './assets/terminal.style.css'
 // Импорт изолированных компонентов
 import LandingPage from './components/LandingGate';
 import Sidebar from './components/Sidebar';
@@ -24,7 +25,77 @@ export default function App() {
   const [activeModuleId, setActiveModuleId] = useState<string>(initialModulesData[0]?.id || '');
   const [activeTabIdx, setActiveTabIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [cliInput, setCliInput] = useState<string>('');
 
+  const handleCliSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const command = cliInput.trim().toLowerCase();
+    if (!command) return;
+
+    const timeStr = new Date().toTimeString().split(' ');
+
+    // Сначала пишем в консоль саму команду, которую ввел пользователь
+    let updatedLogs: LogEntry[] = [
+      ...globalLogs,
+      { time: timeStr[0], type: 'WARN' as const, msg: `USER_EXEC: > ${cliInput}` }
+    ];
+
+    setCliInput(''); // Очищаем строку ввода
+
+    // Разбираем логику киберпанк-команд
+    switch (command) {
+      case 'clear':
+        // Команда очистки: пишем предупреждение, чистим базу и перезагружаем страницу
+        updatedLogs.push({ time: timeStr[0], type: 'SUCCESS' as const, msg: "SYS_PURGE: Запущено уничтожение локального кэша..." });
+        setGlobalLogs(updatedLogs);
+        await SystemAPI.clearCasheSystem();
+
+        setTimeout(() => {
+          window.location.reload(); // Перезагрузка для чистой инициализации
+        }, 800);
+        break;
+
+      case 'help':
+        updatedLogs.push(
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: "HELP_MENU: Доступные директивы ядра:" },
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: "  clear               - Полный сброс LocalStorage и перезапуск" },
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: "  sys_info            - Выгрузить статус аппаратных прерываний" },
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: "  power_off <id>      - Аварийное отключение подсистемы (offline)" }
+        );
+        setGlobalLogs(updatedLogs);
+        await SystemAPI.saveLogs(updatedLogs);
+        break;
+
+      case 'sys_info':
+        const onlineCount = modules.filter(m => m.status === 'online').length;
+        updatedLogs.push(
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: `SYS_STATUS: Подсистем в сети: [${onlineCount}/${modules.length}]` },
+          { time: timeStr[0], type: 'SUCCESS' as const, msg: `SYS_STATUS: Ядро стабильно. Ошибок компиляции TS: 0.` }
+        );
+        setGlobalLogs(updatedLogs);
+        await SystemAPI.saveLogs(updatedLogs);
+        break;
+
+      default:
+        // Если команда не распознана
+        if (command.startsWith('power_off ')) {
+          const targetId = command.replace('power_off ', '').trim();
+          const exists = modules.some(m => m.id === targetId);
+
+          if (exists) {
+            await handleUpdateSubsystemFields(targetId, { status: 'offline', metrics: { ...modules.find(m => m.id === targetId)!.metrics, memory: '0.0MB' } });
+            updatedLogs.push({ time: timeStr[0], type: 'SUCCESS' as const, msg: `CLI_EXEC: Поток [${targetId}] успешно остановлен.` });
+          } else {
+            updatedLogs.push({ time: timeStr[0], type: 'ERROR' as const, msg: `CLI_ERROR: Подсистема [${targetId}] не найдена.` });
+          }
+        } else {
+          updatedLogs.push({ time: timeStr[0], type: 'ERROR' as const, msg: `COMMAND_NOT_FOUND: Директива "${command}" не зарегистрирована в ядре. Введите "help".` });
+        }
+        setGlobalLogs(updatedLogs);
+        await SystemAPI.saveLogs(updatedLogs);
+        break;
+    }
+  };
   // Глобальный буфер терминальных логов
   const [globalLogs, setGlobalLogs] = useState<LogEntry[]>([]);
   // const [globalLogs, setGlobalLogs] = useState<LogEntry[]>([
@@ -229,17 +300,43 @@ export default function App() {
 
           {/* КОНСОЛЬ ТЕРМИНАЛА (ЖИВЫЕ СИСТЕМНЫЕ ЛОГИ) */}
           <footer className="terminal-logs">
-            {globalLogs.map((log, idx) => (
-              <div className="log-row" key={idx}>
-                <span className="log-time">[{log.time}]</span>
-                <span className={`log-type ${log.type === 'SUCCESS' ? 'success' : ''}`}>
-                  [{log.type}]
-                </span>
-                <span className="log-msg">{log.msg}</span>
-              </div>
-            ))}
-            {/* Якорь для авто-скролла */}
-            <div ref={logsEndRef} />
+            {/* Область вывода строк логов */}
+            <div className="logs-scroller" style={{ flexGrow: 1, overflowY: 'auto', marginBottom: '8px' }}>
+              {globalLogs.map((log, idx) => (
+                <div className="log-row" key={idx}>
+                  <span className="log-time">[{log.time}]</span>
+                  <span className={`log-type ${log.type === 'SUCCESS' ? 'success' : log.type === 'ERROR' ? 'error' : ''}`}>
+                    [{log.type}]
+                  </span>
+                  <span className="log-msg">{log.msg}</span>
+                </div>
+              ))}
+              <div ref={logsEndRef} />
+            </div>
+
+            {/* ИНТЕРАКТИВНАЯ СТРОКА ВВОДА CLI */}
+            <form onSubmit={handleCliSubmit} className="cli-form" style={{ display: 'flex', alignItems: 'center', borderTop: '1px dashed var(--border-color)', paddingTop: '6px' }}>
+              <span className="cli-prompt" style={{ color: 'var(--tech-cyan)', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', marginRight: '8px', userSelect: 'none' }}>
+                core_kernel@root:&gt;
+              </span>
+              <input
+                type="text"
+                className="cli-input"
+                value={cliInput}
+                onChange={(e) => setCliInput(e.target.value)}
+                placeholder="Type 'help' for available directives..."
+                autoComplete="off"
+                style={{
+                  flexGrow: 1,
+                  background: 'none',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '12px'
+                }}
+              />
+            </form>
           </footer>
 
         </div>

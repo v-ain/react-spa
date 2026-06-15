@@ -49,5 +49,11 @@ export const SystemAPI = {
   async getLogs(): Promise<LogEntry[]> {
     const data = localStorage.getItem(LOGS_KEY);
     return data ? JSON.parse(data) : [];
+  },
+
+  async clearCasheSystem(): Promise<void> {
+    await delay(400); // Имитируем очистку секторов диска
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LOGS_KEY);
   }
 };

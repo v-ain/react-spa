@@ -1,0 +1,21 @@
+/* Настройки для подкролла логов внутри футера */
+.terminal-logs {
+  display: flex;
+  flex-direction: column;
+  height: 140px;
+  /* Фиксируем высоту консоли */
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.log-type.error {
+  color: var(--status-offline);
+}
+
+.cli-input::placeholder {
+  color: var(--text-metrics);
+  opacity: 0.5;
+}
