@@ -32,3 +32,44 @@
   border-color: var(--border-color);
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.05);
 }
+
+
+/* Кнопка-бургер на мобильных */
+.burger-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+}
+
+.burger-line {
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-color, #ffffff);
+  transition: all 0.3s ease;
+}
+
+/* Кнопка закрытия внутри сайдбара видна только на мобильных */
+.sidebar-close-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Скрываем кнопку закрытия на мобильном, если она не нужна */
+@media (min-width: 768px) {
+
+  /* На десктопе бургер и кнопка закрытия внутри сайдбара не нужны */
+  .burger-btn,
+  .sidebar-close-btn {
+    display: none;
+  }
+}

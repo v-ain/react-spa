@@ -27,6 +27,10 @@ export default function App() {
   const [activeTabIdx, setActiveTabIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [cliInput, setCliInput] = useState<string>('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const [overloadedModuleId, setOverloadedModuleId] = useState<string | null>(null);
 
@@ -305,8 +309,14 @@ export default function App() {
         onSelectModule={(id) => { setActiveModuleId(id); setActiveTabIdx(0); }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
       />
-
+      {/* 2. Оверлей (затемнение) появляется, когда сайдбар открыт. Клик по нему закрывает панель */}
+      <div
+        className={`sidebar-overlay ${isSidebarOpen ? 'is-visible' : ''}`}
+        onClick={closeSidebar}
+      />
       {/* ПРАВАЯ КОЛОНКА СЕТКИ (РЕЗИНОВАЯ: 1fr) */}
       <main className="main-content">
 
@@ -338,6 +348,12 @@ export default function App() {
             </button>
           </nav>
 
+          {/* Кнопка-бургер. На десктопе мы скроем её через CSS */}
+          <button className="burger-btn" onClick={toggleSidebar} aria-label="Открыть меню">
+            <span className="burger-line"></span>
+            <span className="burger-line"></span>
+            <span className="burger-line"></span>
+          </button>
           <div className="tech-badge" style={{ borderColor: 'rgba(34, 197, 94, 0.3)', color: 'var(--status-online)' }}>
             SECURE_CONNECTION: OK
           </div>
