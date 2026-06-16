@@ -4,10 +4,10 @@ import { SubsystemModule, ActiveView, LogEntry } from './types/system';
 
 import { SystemAPI } from './services/api'; // Импортируем наше API
 
-import './assets/core-matrix.css'
-import './assets/header.style.css'
 import './assets/global.css'
 import './assets/style.css'
+import './assets/core-matrix.css'
+import './assets/header.style.css'
 import './assets/panel.style.css'
 import './assets/terminal.style.css'
 import './assets/stat-card.style.css'

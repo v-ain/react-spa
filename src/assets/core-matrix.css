@@ -45,13 +45,42 @@ body {
   background-size: 30px 30px;
 }
 
-/* Жесткая сетка 35/65 (Сайдбар зафиксирован, контент резиновый) */
+/* Главный контейнер сетки после успешной авторизации */
 .app-grid-core {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-workspace);
+}
+
+/* --- 🗂️ БОКОВАЯ ПАНЕЛЬ (Стилизация) --- */
+.tech-sidebar {
+  width: 320px;
+  min-width: 320px;
+  height: 100vh;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.tech-sidebar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+
+  .app-grid-core {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .tech-sidebar {
+    display: flex;
+  }
 }
 
 /* Слой основного контента справа */

@@ -53,29 +53,6 @@ body {
   border-radius: 3px;
 }
 
-/* Главный контейнер сетки после успешной авторизации */
-.app-grid-layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background-color: var(--bg-workspace);
-}
-
-/* --- 🗂️ БОКОВАЯ ПАНЕЛЬ (Стилизация) --- */
-.tech-sidebar {
-  width: 320px;
-  min-width: 320px;
-  height: 100vh;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  z-index: 10;
-}
-
 .sidebar-header {
   padding: 14px 16px 10px 16px;
   display: flex;
