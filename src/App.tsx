@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import initialModulesData from './data/modules-payload.json';
 import { SubsystemModule, ActiveView, LogEntry } from './types/system';
+
+import { SystemAPI } from './services/api'; // Импортируем наше API
+
 import './assets/core-matrix.css'
 import './assets/header.style.css'
 import './assets/global.css'
@@ -16,17 +19,81 @@ export default function App() {
   // --- СИСТЕМНЫЕ СОСТОЯНИЯ (STATE) ---
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<ActiveView>('editor');
-  const [modules, setModules] = useState<SubsystemModule[]>(initialModulesData as SubsystemModule[]);
+  const [modules, setModules] = useState<SubsystemModule[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Стейт загрузки сети
   const [activeModuleId, setActiveModuleId] = useState<string>(initialModulesData[0]?.id || '');
   const [activeTabIdx, setActiveTabIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Глобальный буфер терминальных логов
-  const [globalLogs, setGlobalLogs] = useState<LogEntry[]>([
-    { time: "19:00:00", type: "SUCCESS", msg: "CORE_KERNEL: Инициализация подсистем..." },
-    { time: "19:00:02", type: "SUCCESS", msg: "NET_MESH: Все локальные узлы верифицированы." }
-  ]);
+  const [globalLogs, setGlobalLogs] = useState<LogEntry[]>([]);
+  // const [globalLogs, setGlobalLogs] = useState<LogEntry[]>([
+  //   { time: "19:00:00", type: "SUCCESS", msg: "CORE_KERNEL: Инициализация подсистем..." },
+  //   { time: "19:00:02", type: "SUCCESS", msg: "NET_MESH: Все локальные узлы верифицированы." }
+  // ]);
 
+  // 1. Загрузка данных через API при инициализации приложения
+  useEffect(() => {
+    async function bootstrapSystem() {
+      try {
+        setIsLoading(true);
+        const data = await SystemAPI.getSubsystems();
+        const savedLogs = await SystemAPI.getLogs();
+
+        setModules(data);
+        if (savedLogs.length > 0) {
+          setGlobalLogs(savedLogs);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Критический сбой API ядра:", error);
+      }
+    }
+    bootstrapSystem();
+  }, []);
+
+
+  // 2. Пример функции изменения статуса через интерфейс API
+  const handleToggleModule = async (id: string, newStatus: 'online' | 'offline') => {
+    // Оптимистичное обновление интерфейса (сразу меняем в стейте для плавности)
+    setModules(prev => prev.map(m => m.id === id ? { ...m, status: newStatus } : m));
+
+    // Отправляем асинхронный запрос в наше "API"
+    await SystemAPI.changeModuleStatus(id, newStatus);
+
+    // Пишем лог о сетевой операции
+    const timeStr = new Date().toTimeString().split(' ')[0];
+    setGlobalLogs(prev => {
+      const newLogs = [...prev, { time: timeStr, type: 'SUCCESS' as const, msg: `API_CALL: Модуль ${id} переведен в ${newStatus}` }];
+      SystemAPI.saveLogs(newLogs); // Сохраняем логи в базу
+      return newLogs;
+    });
+  };
+
+  // Функция-посредник для обновления полей подсистемы через API и синхронизации стейта React
+  const handleUpdateSubsystemFields = async (id: string, updatedFields: Partial<SubsystemModule>) => {
+    try {
+      // 1. Отправляем запрос в слой API (сохраняем в localStorage)
+      await SystemAPI.updateSubsystem(id, updatedFields);
+
+      // 2. Мгновенно обновляем стейт в React, чтобы интерфейс перерисовался
+      setModules(prevModules =>
+        prevModules.map(mod => mod.id === id ? { ...mod, ...updatedFields } : mod)
+      );
+    } catch (error) {
+      console.error("Не удалось обновить подсистему через API:", error);
+    }
+  };
+
+  // Вспомогательная функция для быстрой инжекции логов из дочерних компонентов
+  const handleLogSystemAction = (msg: string, type: 'SUCCESS' | 'WARN') => {
+    const timeStr = new Date().toTimeString().split(' ')[0];
+    setGlobalLogs(prev => {
+      const newLogs = [...prev, { time: timeStr, type, msg }];
+      SystemAPI.saveLogs(newLogs); // Сохраняем историю логов в localStorage
+      return newLogs;
+    });
+  };
   const logsEndRef = useRef<HTMLDivElement | null>(null);
 
   // --- МЕМОИЗАЦИЯ И ФИЛЬТРАЦИЯ ДАННЫХ ---
@@ -89,7 +156,9 @@ export default function App() {
   if (!isAuthenticated) {
     return <LandingPage onInitializationComplete={() => setIsAuthenticated(true)} />;
   }
-
+  if (isLoading) {
+    return <div className="loading-screen">{">"} CONNECTING TO LOCAL_API_CORE...</div>;
+  }
   return (
     <div className="app-grid-core">
 
@@ -146,10 +215,16 @@ export default function App() {
             <ModuleInspector
               activeModule={activeModule}
               activeTabIdx={activeTabIdx}
-              onTabSelect={setActiveTabIdx}
+              onTabChange={setActiveTabIdx}
+              onUpdateSubsystem={handleUpdateSubsystemFields} // Тот же самый метод, что использует KernelConfig!
+              onLogAction={handleLogSystemAction} // Тот же сквозной логгер
             />
           ) : (
-            <KernelConfig />
+            <KernelConfig
+              subsystems={modules} // Передаем актуальный стейт подсистем
+              onUpdateSubsystem={handleUpdateSubsystemFields} // Передаем триггер API-обновления
+              onLogAction={handleLogSystemAction} // Передаем логгер
+            />
           )}
 
           {/* КОНСОЛЬ ТЕРМИНАЛА (ЖИВЫЕ СИСТЕМНЫЕ ЛОГИ) */}

@@ -1,53 +1,195 @@
 import React, { useState } from 'react';
+import { SubsystemModule } from '../types/system';
 
-export default function KernelConfig() {
-  const [ramLimit, setRamLimit] = useState<number>(512);
-  const [tickRate, setTickRate] = useState<number>(3000);
+// Контракт входящих параметров (Props)
+interface KernelConfigProps {
+  subsystems: SubsystemModule[];
+  onUpdateSubsystem: (id: string, updatedFields: Partial<SubsystemModule>) => Promise<void>;
+  onLogAction: (msg: string, type: 'SUCCESS' | 'WARN') => void;
+}
+
+export default function KernelConfig({ subsystems, onUpdateSubsystem, onLogAction }: KernelConfigProps) {
+  // Глобальные настройки ядра (Лимиты), которые мы тоже можем крутить
+  const [maxRam, setMaxRam] = useState<number>(512);
+  const [tickRate, setTickRate] = useState<number>(2500);
+
+  // Состояния для тумблеров-переключателей
+  const [isIsolated, setIsIsolated] = useState<boolean>(true);
+  const [isVerbose, setIsVerbose] = useState<boolean>(false);
+
+  // Обработчик изменения ползунка системного тика
+  const handleTickRateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newRate = parseInt(e.target.value);
+    setTickRate(newRate);
+    onLogAction(`CORE_KERNEL: Частота такта процессора эмуляции изменена на ${newRate}ms`, 'SUCCESS');
+    // В реальной системе здесь также шел бы вызов к API: await SystemAPI.updateGlobalConfig(...)
+  };
+
+  // Обработчик ручного изменения лимита RAM для конкретной подсистемы через таблицу/интерфейс
+  const handleSubsystemRamChange = async (id: string, currentMem: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    // Имитируем "выделение дополнительной памяти" модулю на +2.0 MB по клику
+    const currentNum = parseFloat(currentMem);
+    const newMem = `${(currentNum + 2.0).toFixed(1)}MB`;
+
+    try {
+      await onUpdateSubsystem(id, {
+        metrics: {
+          ...subsystems.find(s => s.id === id)!.metrics,
+          memory: newMem
+        }
+      });
+      onLogAction(`API_CALL: Для подсистемы [${id}] успешно выделен дополнительный пул памяти: ${newMem}`, 'SUCCESS');
+    } catch (error) {
+      onLogAction(`API_ERROR: Ошибка выделения памяти для подсистемы [${id}]`, 'WARN');
+    }
+  };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', flexGrow: 1 }}>
+    <div className="config-workspace">
 
-      {/* Левый блок: Ручки управления */}
-      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--matrix-border)', borderRadius: '8px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <h3 style={{ fontSize: '12px', color: 'var(--text-neon)', textTransform: 'uppercase', margin: 0, paddingBottom: '8px', borderBottom: '1px solid var(--matrix-border)' }}>Resource Allocator</h3>
+      {/* ЛЕВАЯ ЧАСТЬ: УПРАВЛЕНИЕ ПАРАМЕТРАМИ ЯДРА */}
+      <div className="config-panel">
+        <h2 className="panel-section-title">Core Resource Allocator</h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
+        {/* Ползунок 1: Глобальный лимит RAM */}
+        <div className="control-group">
+          <div className="control-label-row">
             <span>MAX_MEMORY_POOL_LIMIT</span>
-            <span style={{ color: 'var(--text-bright)' }}>{ramLimit} MB</span>
+            <span className="control-value">{maxRam} MB</span>
           </div>
-          <input type="range" min="128" max="1024" value={ramLimit} onChange={(e) => setRamLimit(Number(e.target.value))} style={{ width: '100%', height: '4px', background: 'var(--bg-terminal)', outline: 'none', cursor: 'pointer' }} />
+          <input
+            type="range"
+            className="tech-slider"
+            min="128"
+            max="1024"
+            value={maxRam}
+            onChange={(e) => setMaxRam(parseInt(e.target.value))}
+            onMouseUp={() => onLogAction(`CORE_KERNEL: Глобальный лимит RAM переведен на отметку ${maxRam}MB`, 'SUCCESS')}
+          />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
+        {/* Ползунок 2: Частота тика системы */}
+        <div className="control-group">
+          <div className="control-label-row">
             <span>SYSTEM_TICK_RATE (POLLING)</span>
-            <span style={{ color: 'var(--text-bright)' }}>{tickRate} ms</span>
+            <span className="control-value">{tickRate} ms</span>
           </div>
-          <input type="range" min="500" max="10000" step="500" value={tickRate} onChange={(e) => setTickRate(Number(e.target.value))} style={{ width: '100%', height: '4px', background: 'var(--bg-terminal)', outline: 'none', cursor: 'pointer' }} />
+          <input
+            type="range"
+            className="tech-slider"
+            min="500"
+            max="5000"
+            step="500"
+            value={tickRate}
+            onChange={handleTickRateChange}
+          />
+        </div>
+
+        <h2 className="panel-section-title" style={{ marginTop: '10px' }}>Security Protocols & Toggles</h2>
+
+        {/* Тумблер 1: Изоляция потоков */}
+        <div className="toggle-row">
+          <div className="toggle-info">
+            <span className="toggle-title">Thread Isolation Mode</span>
+            <span className="toggle-desc">Запуск каждого модуля в изолированной песочнице</span>
+          </div>
+          <button
+            type="button"
+            className="tech-badge"
+            style={{
+              cursor: 'pointer',
+              background: 'none',
+              borderColor: isIsolated ? 'var(--status-online)' : 'var(--text-metrics)',
+              color: isIsolated ? 'var(--status-online)' : 'var(--text-muted)'
+            }}
+            onClick={() => {
+              setIsIsolated(!isIsolated);
+              onLogAction(`SECURITY: Протокол Thread Isolation Mode переведен в статус [${!isIsolated ? 'ENABLED' : 'DISABLED'}]`, !isIsolated ? 'SUCCESS' : 'WARN');
+            }}
+          >
+            {isIsolated ? 'ENABLED' : 'DISABLED'}
+          </button>
+        </div>
+
+        {/* Тумблер 2: Расширенные логи */}
+        <div className="toggle-row">
+          <div className="toggle-info">
+            <span className="toggle-title">Verbose Log Injection</span>
+            <span className="toggle-desc">Детальный вывод отладочной информации в консоль логов</span>
+          </div>
+          <button
+            type="button"
+            className="tech-badge"
+            style={{
+              cursor: 'pointer',
+              background: 'none',
+              borderColor: isVerbose ? 'var(--status-online)' : 'var(--text-metrics)',
+              color: isVerbose ? 'var(--status-online)' : 'var(--text-muted)'
+            }}
+            onClick={() => {
+              setIsVerbose(!isVerbose);
+              onLogAction(`CORE_KERNEL: Протокол Verbose Log Injection переведен в статус [${!isVerbose ? 'ENABLED' : 'DISABLED'}]`, !isVerbose ? 'SUCCESS' : 'WARN');
+            }}
+          >
+            {isVerbose ? 'ENABLED' : 'DISABLED'}
+          </button>
         </div>
       </div>
 
-      {/* Правый блок: Таблица карт зависимостей */}
-      <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--matrix-border)', borderRadius: '8px', padding: '20px' }}>
-        <h3 style={{ fontSize: '12px', color: 'var(--text-neon)', textTransform: 'uppercase', margin: 0, paddingBottom: '8px', borderBottom: '1px solid var(--matrix-border)' }}>Dependency Architecture</h3>
+      {/* ПРАВАЯ ЧАСТЬ: ДИНАМИЧЕСКИЙ МОНИТОРИНГ ИЗ LOCALSTORAGE */}
+      <div className="config-panel">
+        <h2 className="panel-section-title">Cluster Dependency Mapping</h2>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', marginTop: '12px', textAlign: 'left' }}>
+        {/* Системная таблица подсистем */}
+        <table className="tech-table">
           <thead>
-            <tr style={{ color: 'var(--text-muted)' }}>
-              <th style={{ padding: '8px' }}>NODE_ID</th>
+            <tr>
+              <th>SUBSYSTEM_ID</th>
               <th>ALLOC_RAM</th>
+              <th>CPU_LOAD</th>
               <th>INTEGRITY</th>
             </tr>
           </thead>
           <tbody>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}><td style={{ padding: '10px 8px' }}>git-visualizer</td><td>4.2 MB</td><td style={{ color: 'var(--cyber-green)' }}>99.8%</td></tr>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}><td style={{ padding: '10px 8px' }}>linter-core</td><td>18.2 MB</td><td style={{ color: 'var(--cyber-green)' }}>100%</td></tr>
+            {subsystems.map((mod) => (
+              <tr key={mod.id}>
+                <td style={{ color: 'var(--tech-cyan)' }}>{mod.id}</td>
+                <td
+                  onClick={(e) => handleSubsystemRamChange(mod.id, mod.metrics.memory, e)}
+                  style={{ cursor: 'pointer', textDecoration: 'underline rgba(56, 189, 248, 0.2)' }}
+                  title="Кликните, чтобы выделить +2MB"
+                >
+                  {mod.metrics.memory}
+                </td>
+                <td style={{ color: mod.metrics.load === 'high' ? 'var(--status-idle)' : 'var(--text-primary)' }}>
+                  {mod.metrics.load === 'high' ? '14.5%' : mod.metrics.load === 'medium' ? '4.1%' : '0.8%'}
+                </td>
+                <td>
+                  <span className="badge-status-ok" style={{
+                    color: mod.status === 'online' ? 'var(--status-online)' : 'var(--status-idle)',
+                    borderColor: mod.status === 'online' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(234, 179, 8, 0.2)'
+                  }}>
+                    {mod.status === 'online' ? '99.8%' : '0.0% (IDLE)'}
+                  </span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+
+        {/* Блок системного статуса ядра */}
+        <div style={{ marginTop: 'auto', padding: '12px', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            KERNEL_INTEGRITY_LOG:
+          </div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: 'var(--status-online)' }}>
+            &gt;&gt; Инициализировано подсистем: {subsystems.filter(s => s.status === 'online').length} / {subsystems.length}
+            <br />&gt;&gt; База данных LocalStorage активна. Hot Dynamic Linked: OK.
+          </div>
+        </div>
       </div>
 
     </div>
   );
 }
-
