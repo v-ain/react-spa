@@ -1,11 +1,15 @@
 {
   "name": "kernel-console/client",
   "version": "1.0.0",
+  "homepage": "https://v-ain.github.io/react-spa",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build"
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -15,6 +19,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.9.0",
     "vite": "^8.0.0"
   }
