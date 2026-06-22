@@ -8,6 +8,8 @@ interface SidebarProps {
   onSelectModule: (id: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function Sidebar({
@@ -15,7 +17,9 @@ export default function Sidebar({
   activeModuleId,
   onSelectModule,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  isOpen,
+  onClose
 }: SidebarProps) {
 
   // Безопасный обработчик изменения текста в инпуте
@@ -24,11 +28,12 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="tech-sidebar">
+    <aside className={`tech-sidebar ${isOpen ? 'is-open' : ''}`}>
       {/* ШАПКА САЙДБАРА */}
       <div className="sidebar-header">
         <span className="sidebar-title">SYSTEM_MODULES</span>
         <span className="tech-badge">SYS_INIT</span>
+        <button className="sidebar-close-btn" onClick={onClose}>✕</button>
       </div>
 
       {/* ТЕРМИНАЛЬНАЯ СТРОКА ПОИСКАС ПРИГЛАШЕНИЕМ ">" */}

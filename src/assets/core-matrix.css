@@ -45,13 +45,96 @@ body {
   background-size: 30px 30px;
 }
 
-/* Жесткая сетка 35/65 (Сайдбар зафиксирован, контент резиновый) */
+/* Главный контейнер сетки после успешной авторизации */
 .app-grid-core {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 1fr;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-workspace);
+  position: relative;
+}
+
+/* --- 🗂️ БОКОВАЯ ПАНЕЛЬ (Стилизация) --- */
+.tech-sidebar {
+  width: 320px;
+  min-width: 320px;
+  height: 100vh;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  z-index: 100;
+
+  /* анимации для мобильных: */
+  position: fixed;
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
+  /* Прячем полностью влево за экран */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Плавный выезд */
+}
+
+/* Класс-модификатор, Сайдбар плавно выезжает */
+.tech-sidebar.is-open {
+  transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+
+  .app-grid-core {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .tech-sidebar {
+    display: flex;
+  }
+}
+
+/* --- 🌫️ ПОЛУПРОЗРАЧНЫЙ СЛОЙ (OVERLAY) --- */
+/* На мобильном он перекрывает контент, когда сайдбар открыт. Клик по нему закрывает сайдбар */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  /* Эффект размытия заднего плана */
+  z-index: 90;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* --- 🖥️ ДЕСКТОПНАЯ ВЕРСИЯ (От 768px и выше) --- */
+@media (min-width: 768px) {
+  .app-grid-core {
+    /* Включаем двухколоночную сетку */
+    grid-template-columns: 320px 1fr;
+  }
+
+  .tech-sidebar {
+    /* Возвращаем сайдбар в обычный поток сетки */
+    position: static;
+    transform: none;
+    transition: none;
+    /* Отключаем мобильную анимацию, чтобы не лагало при ресайзе */
+  }
+
+  /* На десктопе оверлей вообще никогда не нужен */
+  .sidebar-overlay {
+    display: none;
+  }
 }
 
 /* Слой основного контента справа */

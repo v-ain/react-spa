@@ -1,6 +1,8 @@
 import { SubsystemModule, LogEntry, SystemStatus } from '../types/system';
 import initialModulesData from '../data/modules-payload.json';
+import { parsePackageLock } from './lockParser';
 
+import rawLockData from '../data/package-lock.json';
 const STORAGE_KEY = 'cyber_kernel_subsystems';
 const LOGS_KEY = 'cyber_kernel_logs';
 
@@ -10,7 +12,9 @@ export const SystemAPI = {
   // Инициализация локальной "БД"
   init(): void {
     if (!localStorage.getItem(STORAGE_KEY)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialModulesData));
+      // КЛЮЧЕВОЙ МОМЕНТ: Парсим ваш реальный лок-файл при первой инициализации!
+      const parsedSubsystems = parsePackageLock(rawLockData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedSubsystems));
     }
   },
 
