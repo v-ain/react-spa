@@ -3,8 +3,28 @@
   display: grid;
   grid-template-columns: 1fr 1fr; /* Ровно пополам: Управление и Мониторинг */
   gap: 20px;
-  height: calc(100vh - 100px); /* Учитываем высоту шапки */
+  height: calc(100dvh - 240px); /* Учитываем высоту шапки и терминала*/
   box-sizing: border-box;
+}
+
+/* ======================================================= */
+/* МОБИЛЬНЫЕ СТИЛИ (Экран меньше 768px) */
+@media (max-width: 768px) {
+  /* Перестраиваем Грид воркспейса */
+  .config-workspace {
+    grid-template-columns: 1fr; /* Схлопываем в одну колонку на мобилке */
+    gap: 16px;
+  }
+
+  .workspace-body {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  /* Шапка на мобилке становится чуть компактнее по бокам */
+  .content-header {
+    padding: 0 12px;
+  }
 }
 
 .config-panel {

@@ -33,6 +33,11 @@
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.05);
 }
 
+.active-module-info {
+  display: flex;
+  align-items: center;
+}
+
 /* Кнопка-бургер на мобильных */
 .burger-btn {
   display: flex;
@@ -69,5 +74,50 @@
   .burger-btn,
   .sidebar-close-btn {
     display: none;
+  }
+}
+
+/* ПО УМОЛЧАНИЮ (ДЕCКТОП) */
+.header-status-dot {
+  display: none; /* Прячем точку на больших экранах */
+}
+
+/* На десктопе иконки внутри кнопок навигации спрятаны */
+.nav-icon {
+  display: none;
+}
+
+/* МОБИЛЬНЫЕ ЭКРАНЫ (меньше 768px) */
+@media (max-width: 768px) {
+  .content-header .tech-badge {
+    display: none; /* Полностью убираем текст на мобилках */
+  }
+
+  .header-status-dot {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 14px;
+    color: var(--status-online);
+    animation: blink 2s infinite;
+  }
+
+  .nav-text {
+    display: none; /* Стираем длинные слова */
+  }
+  .nav-icon {
+    display: block; /* Показываем красивую SVG-иконку */
+  }
+}
+
+/* СТИЛЬ ДЛЯ МИГАНИЯ ТОЧКИ */
+@keyframes blink {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
   }
 }

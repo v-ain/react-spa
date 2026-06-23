@@ -224,7 +224,7 @@ body {
   color: var(--text-muted);
 }
 
-.module-path span {
+.module-path_link {
   color: var(--tech-cyan);
 }
 
@@ -404,4 +404,16 @@ body {
 
 .log-msg {
   color: #94a3b8;
+}
+
+/* На десктопе всё показывается как обычно */
+.hide-on-mobile {
+  display: inline;
+}
+
+/* На мобилках полностью вырезаем из верстки скрываемую часть */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none;
+  }
 }
