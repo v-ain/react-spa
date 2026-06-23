@@ -381,32 +381,65 @@ export default function App() {
         {/* МОНОЛИТНАЯ ШАПКА СИСТЕМЫ */}
         <header className="content-header">
           <div className="active-module-info">
+            <span className="header-status-dot">●</span>
             <div className="module-path">
               {currentView === 'editor' ? (
                 <>
-                  ROOT // CORE // <span>{activeModule.name}</span>
+                  <span className="hide-on-mobile">ROOT // CORE // </span>
+                  <span className="module-path_link">{activeModule.id}</span>
                 </>
               ) : (
                 <>
-                  ROOT // SYSTEM // <span>KERNEL_CONFIG</span>
+                  <span className="hide-on-mobile">ROOT // </span>
+                  <span> SYSTEM </span>
+                  <span className="hide-on-mobile module-path_link">// KERNEL_CONFIG</span>
                 </>
               )}
             </div>
           </div>
 
-          {/* ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ ОТОБРАЖЕНИЯ */}
+          {/* 2. ЦЕНТРАЛЬНАЯ ЧАСТЬ: Переключатель режимов */}
           <nav className="header-nav">
             <button
               className={`nav-btn ${currentView === 'editor' ? 'active' : ''}`}
               onClick={() => setCurrentView('editor')}
+              title="Module Inspector"
             >
-              Module_Inspector
+              {/* SVG иконка кода </> */}
+              <svg
+                className="nav-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+              <span className="nav-text">Module_Inspector</span>
             </button>
+
             <button
               className={`nav-btn ${currentView === 'config' ? 'active' : ''}`}
               onClick={() => setCurrentView('config')}
+              title="Kernel Settings"
             >
-              Kernel_Settings
+              {/* SVG иконка шестеренки */}
+              <svg
+                className="nav-icon"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="nav-text">Kernel_Settings</span>
             </button>
           </nav>
 
@@ -417,7 +450,7 @@ export default function App() {
             <span className="burger-line"></span>
           </button>
           <div className="tech-badge" style={{ borderColor: 'rgba(34, 197, 94, 0.3)', color: 'var(--status-online)' }}>
-            SECURE_CONNECTION: OK
+            <span className="status-text">SECURE_CONNECTION: OK</span>
           </div>
         </header>
 
