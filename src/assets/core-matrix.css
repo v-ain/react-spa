@@ -84,7 +84,6 @@ body {
 }
 
 @media (min-width: 768px) {
-
   .app-grid-core {
     grid-template-columns: 320px 1fr;
   }
@@ -108,7 +107,9 @@ body {
   z-index: 90;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
 }
 
 .sidebar-overlay.is-visible {

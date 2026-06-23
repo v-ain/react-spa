@@ -34,7 +34,6 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
-
 @keyframes alarmBlink {
   0% {
     border-color: rgba(239, 68, 68, 0.2);
