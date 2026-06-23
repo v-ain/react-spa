@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { SubsystemModule } from '../types/system';
-import Sparkline from './ui/Sparkline';
+import React, { useState, useEffect, useRef } from 'react'
+import { SubsystemModule } from '../types/system'
+import Sparkline from './ui/Sparkline'
 
 interface ModuleInspectorProps {
-  activeModule: SubsystemModule;
-  activeTabIdx: number;
-  onTabChange: (idx: number) => void;
-  onUpdateSubsystem: (id: string, updatedFields: Partial<SubsystemModule>) => Promise<void>;
-  onUpdateSubsystemCode: (id: string, tabIdx: number, newLines: string[]) => Promise<void>;
-  onLogAction: (msg: string, type: 'SUCCESS' | 'WARN' | 'ERROR') => void;
+  activeModule: SubsystemModule
+  activeTabIdx: number
+  onTabChange: (idx: number) => void
+  onUpdateSubsystem: (id: string, updatedFields: Partial<SubsystemModule>) => Promise<void>
+  onUpdateSubsystemCode: (id: string, tabIdx: number, newLines: string[]) => Promise<void>
+  onLogAction: (msg: string, type: 'SUCCESS' | 'WARN' | 'ERROR') => void
 
-  overloadedModuleId: string | null;
+  overloadedModuleId: string | null
 }
 
 export default function ModuleInspector({
@@ -20,101 +20,125 @@ export default function ModuleInspector({
   onUpdateSubsystem,
   onUpdateSubsystemCode,
   onLogAction,
-  overloadedModuleId
+  overloadedModuleId,
 }: ModuleInspectorProps) {
-
-  const isOnline = activeModule.status === 'online';
-  const isOverloaded = overloadedModuleId === activeModule.id;
-  const ramNumeric = parseFloat(activeModule.metrics.memory) || 0;
+  const isOnline = activeModule.status === 'online'
+  const isOverloaded = overloadedModuleId === activeModule.id
+  const ramNumeric = parseFloat(activeModule.metrics.memory) || 0
   // Если стресс-тест — выставляем пиковую нагрузку CPU
   const loadNumeric = isOverloaded
     ? 98.4
-    : (activeModule.metrics.load === 'high' ? 14.5 : activeModule.metrics.load === 'medium' ? 4.1 : 0.8);
+    : activeModule.metrics.load === 'high'
+      ? 14.5
+      : activeModule.metrics.load === 'medium'
+        ? 4.1
+        : 0.8
 
   // --- ЛОКАЛЬНЫЙ СТЕЙТ ДЛЯ ИНЖЕКТОРА КОДА ---
-  const [editableLines, setEditableLines] = useState<string[]>([]);
-  const [isModified, setIsModified] = useState<boolean>(false);
-  const codeContainerRef = useRef<HTMLDivElement | null>(null);
+  const [editableLines, setEditableLines] = useState<string[]>([])
+  const [isModified, setIsModified] = useState<boolean>(false)
+  const codeContainerRef = useRef<HTMLDivElement | null>(null)
 
   // Синхронизируем локальный буфер кода при переключении модулей или вкладок
   useEffect(() => {
-    const currentLines = activeModule.tabs[activeTabIdx]?.lines || [];
-    setEditableLines(currentLines);
-    setIsModified(false);
-  }, [activeModule.id, activeTabIdx, activeModule.tabs]);
+    const currentLines = activeModule.tabs[activeTabIdx]?.lines || []
+    setEditableLines(currentLines)
+    setIsModified(false)
+  }, [activeModule.id, activeTabIdx, activeModule.tabs])
 
   // Слушатель изменения текста в строке
   const handleLineChange = (index: number, text: string) => {
-    setEditableLines(prev => {
-      const next = [...prev];
-      next[index] = text;
-      return next;
-    });
-    setIsModified(true);
-  };
+    setEditableLines((prev) => {
+      const next = [...prev]
+      next[index] = text
+      return next
+    })
+    setIsModified(true)
+  }
 
   // Перехват горячих клавиш Ctrl + S для быстрого патча
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
+      e.preventDefault()
       if (isModified && isOnline) {
-        handleApplyPatch();
+        handleApplyPatch()
       }
     }
-  };
+  }
 
   // Отправка патча в API и компиляция
   const handleApplyPatch = async () => {
-    if (!isOnline) return;
+    if (!isOnline) return
 
     try {
-      onLogAction(`COMPILER: Сборка абстрактного синтаксического дерева (AST) для [${activeModule.id}]...`, 'SUCCESS');
+      onLogAction(`COMPILER: Сборка абстрактного синтаксического дерева (AST) для [${activeModule.id}]...`, 'SUCCESS')
 
-      await onUpdateSubsystemCode(activeModule.id, activeTabIdx, editableLines);
+      await onUpdateSubsystemCode(activeModule.id, activeTabIdx, editableLines)
 
-      setIsModified(false);
-      onLogAction(`SYS_PATCH: Хот-фикс успешно инжектирован в рантайм подсистемы [${activeModule.name}]. HMR завершен.`, 'SUCCESS');
+      setIsModified(false)
+      onLogAction(
+        `SYS_PATCH: Хот-фикс успешно инжектирован в рантайм подсистемы [${activeModule.name}]. HMR завершен.`,
+        'SUCCESS'
+      )
     } catch {
-      onLogAction(`COMPILER_ERROR: Ошибка компиляции патча кода. Инжекция отменена.`, 'ERROR');
+      onLogAction(`COMPILER_ERROR: Ошибка компиляции патча кода. Инжекция отменена.`, 'ERROR')
     }
-  };
+  }
 
   const handleTogglePower = async () => {
-    const nextStatus = activeModule.status === 'online' ? 'offline' : 'online';
+    const nextStatus = activeModule.status === 'online' ? 'offline' : 'online'
     try {
       await onUpdateSubsystem(activeModule.id, {
         status: nextStatus,
-        metrics: { ...activeModule.metrics, memory: nextStatus === 'online' ? '4.2MB' : '0.0MB' }
-      });
-      onLogAction(`API_CALL: Подсистема [${activeModule.name}] переведена в режим [${nextStatus.toUpperCase()}]`, nextStatus === 'online' ? 'SUCCESS' : 'WARN');
+        metrics: { ...activeModule.metrics, memory: nextStatus === 'online' ? '4.2MB' : '0.0MB' },
+      })
+      onLogAction(
+        `API_CALL: Подсистема [${activeModule.name}] переведена в режим [${nextStatus.toUpperCase()}]`,
+        nextStatus === 'online' ? 'SUCCESS' : 'WARN'
+      )
     } catch {
-      onLogAction(`API_ERROR: Ошибка питания.`, 'ERROR');
+      onLogAction(`API_ERROR: Ошибка питания.`, 'ERROR')
     }
-  };
+  }
 
   return (
     <div onKeyDown={handleKeyDown}>
       {/* СЕТКА СИСТЕМНЫХ МЕТРИК */}
       <section className="stats-grid">
-
         {/* Карточка 1: Файлы */}
-        <div className="stat-card" style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}>
+        <div
+          className="stat-card"
+          style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}
+        >
           <div style={{ flexGrow: 1 }}>
             <span className="stat-label">Total Index Files</span>
             <span className="stat-value cyan">{isOnline ? activeModule.metrics.filesCount : '0'}</span>
           </div>
-          <Sparkline value={isOnline ? parseInt(activeModule.metrics.filesCount) : 0} isOnline={isOnline} isOverloaded={isOverloaded} color="var(--tech-cyan)" />
+          <Sparkline
+            value={isOnline ? parseInt(activeModule.metrics.filesCount) : 0}
+            isOnline={isOnline}
+            isOverloaded={isOverloaded}
+            color="var(--tech-cyan)"
+          />
         </div>
 
         {/* Карточка 2: Оперативная память */}
-        <div className="stat-card" style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}>
+        <div
+          className="stat-card"
+          style={{ transition: 'all 0.3s', borderColor: isOverloaded ? 'rgba(239, 68, 68, 0.3)' : '' }}
+        >
           <div style={{ flexGrow: 1 }}>
             <span className="stat-label">Heap Allocation</span>
             <span className="stat-value" style={{ color: isOverloaded ? 'var(--status-offline)' : '' }}>
               {isOverloaded ? '942.1 MB' : activeModule.metrics.memory}
             </span>
           </div>
-          <Sparkline value={isOverloaded ? 942 : ramNumeric} isOnline={isOnline} isOverloaded={isOverloaded} color="#38bdf8" />
+          <Sparkline
+            value={isOverloaded ? 942 : ramNumeric}
+            isOnline={isOnline}
+            isOverloaded={isOverloaded}
+            color="#38bdf8"
+          />
         </div>
 
         {/* Карточка 3: CPU Pulse с анимацией тревожного мигания */}
@@ -122,12 +146,18 @@ export default function ModuleInspector({
           className={`stat-card ${isOverloaded ? 'alarm-blink' : ''}`}
           style={{
             transition: 'all 0.3s',
-            borderColor: isOverloaded ? 'var(--status-offline)' : (isOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
-            background: isOverloaded ? 'rgba(239, 68, 68, 0.02)' : ''
+            borderColor: isOverloaded
+              ? 'var(--status-offline)'
+              : isOnline
+                ? 'rgba(34, 197, 94, 0.2)'
+                : 'rgba(239, 68, 68, 0.2)',
+            background: isOverloaded ? 'rgba(239, 68, 68, 0.02)' : '',
           }}
         >
           <div style={{ flexGrow: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '10px' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '10px' }}
+            >
               <span className="stat-label" style={{ color: isOverloaded ? 'var(--status-offline)' : '' }}>
                 {isOverloaded ? 'CRIT_OVERLOAD' : 'CPU Pulse'}
               </span>
@@ -135,24 +165,40 @@ export default function ModuleInspector({
                 <button
                   type="button"
                   className="tech-badge"
-                  style={{ cursor: 'pointer', background: 'none', fontSize: '9px', borderColor: isOnline ? 'var(--status-online)' : 'var(--status-offline)', color: isOnline ? 'var(--status-online)' : 'var(--status-offline)' }}
+                  style={{
+                    cursor: 'pointer',
+                    background: 'none',
+                    fontSize: '9px',
+                    borderColor: isOnline ? 'var(--status-online)' : 'var(--status-offline)',
+                    color: isOnline ? 'var(--status-online)' : 'var(--status-offline)',
+                  }}
                   onClick={handleTogglePower}
                 >
                   {isOnline ? '[SHUTDOWN]' : '[INITIALIZE]'}
                 </button>
               )}
             </div>
-            <span className="stat-value" style={{ color: isOverloaded || !isOnline ? 'var(--status-offline)' : 'var(--status-online)' }}>
+            <span
+              className="stat-value"
+              style={{ color: isOverloaded || !isOnline ? 'var(--status-offline)' : 'var(--status-online)' }}
+            >
               {isOnline ? `${loadNumeric}%` : 'OFFLINE'}
             </span>
           </div>
-          <Sparkline value={isOnline ? loadNumeric : 0} isOnline={isOnline} isOverloaded={isOverloaded} color="var(--status-online)" />
+          <Sparkline
+            value={isOnline ? loadNumeric : 0}
+            isOnline={isOnline}
+            isOverloaded={isOverloaded}
+            color="var(--status-online)"
+          />
         </div>
-
       </section>
 
       {/* ОСНОВНАЯ ПАНЕЛЬ С ИНЖЕКТОРОМ КОДА */}
-      <section className="main-work-panel" style={{ opacity: isOnline ? 1 : 0.4, transition: 'opacity 0.2s', marginTop: '16px' }}>
+      <section
+        className="main-work-panel"
+        style={{ opacity: isOnline ? 1 : 0.4, transition: 'opacity 0.2s', marginTop: '16px' }}
+      >
         <div className="panel-tabs" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex' }}>
             {activeModule.tabs.map((tab, idx) => (
@@ -182,7 +228,7 @@ export default function ModuleInspector({
                 borderColor: 'var(--tech-cyan)',
                 color: 'var(--tech-cyan)',
                 animation: 'pulse 1.5s infinite',
-                fontSize: '10px'
+                fontSize: '10px',
               }}
             >
               [APPLY_PATCH (Ctrl+S)]
@@ -205,7 +251,7 @@ export default function ModuleInspector({
                   style={{
                     outline: 'none',
                     width: '100%',
-                    caretColor: 'var(--tech-cyan)' // Цвет мигающего курсора
+                    caretColor: 'var(--tech-cyan)', // Цвет мигающего курсора
                   }}
                 >
                   {line}
@@ -213,13 +259,25 @@ export default function ModuleInspector({
               </div>
             ))
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-metrics)', fontFamily: 'JetBrains Mono, monospace', padding: '40px 0' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-metrics)',
+                fontFamily: 'JetBrains Mono, monospace',
+                padding: '40px 0',
+              }}
+            >
               <div>&gt;&gt; [CRITICAL]: NO_SIGNAL_DETECTED</div>
-              <div style={{ fontSize: '11px', marginTop: '4px' }}>SUBSYSTEM_OFFLINE: Изменения заблокированы до инициализации потоков.</div>
+              <div style={{ fontSize: '11px', marginTop: '4px' }}>
+                SUBSYSTEM_OFFLINE: Изменения заблокированы до инициализации потоков.
+              </div>
             </div>
           )}
         </div>
       </section>
     </div>
-  );
+  )
 }

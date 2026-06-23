@@ -1,15 +1,15 @@
-import React from 'react';
-import { SubsystemModule } from '../types/system';
+import React from 'react'
+import { SubsystemModule } from '../types/system'
 
 // Строгий контракт входящих пропсов для Сайдбара
 interface SidebarProps {
-  modules: SubsystemModule[];
-  activeModuleId: string;
-  onSelectModule: (id: string) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  isOpen: boolean;
-  onClose: () => void;
+  modules: SubsystemModule[]
+  activeModuleId: string
+  onSelectModule: (id: string) => void
+  searchQuery: string
+  onSearchChange: (query: string) => void
+  isOpen: boolean
+  onClose: () => void
 }
 
 export default function Sidebar({
@@ -19,13 +19,12 @@ export default function Sidebar({
   searchQuery,
   onSearchChange,
   isOpen,
-  onClose
+  onClose,
 }: SidebarProps) {
-
   // Безопасный обработчик изменения текста в инпуте
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    onSearchChange(e.target.value);
-  };
+    onSearchChange(e.target.value)
+  }
 
   return (
     <aside className={`tech-sidebar ${isOpen ? 'is-open' : ''}`}>
@@ -33,7 +32,9 @@ export default function Sidebar({
       <div className="sidebar-header">
         <span className="sidebar-title">SYSTEM_MODULES</span>
         <span className="tech-badge">SYS_INIT</span>
-        <button className="sidebar-close-btn" onClick={onClose}>✕</button>
+        <button className="sidebar-close-btn" onClick={onClose}>
+          ✕
+        </button>
       </div>
 
       {/* ТЕРМИНАЛЬНАЯ СТРОКА ПОИСКАС ПРИГЛАШЕНИЕМ ">" */}
@@ -52,9 +53,9 @@ export default function Sidebar({
       <ul className="tools-list">
         {modules.length > 0 ? (
           modules.map((mod) => {
-            const isSelected = activeModuleId === mod.id;
-            const isOnline = mod.status === 'online';
-            const isIdle = mod.status === 'idle';
+            const isSelected = activeModuleId === mod.id
+            const isOnline = mod.status === 'online'
+            const isIdle = mod.status === 'idle'
 
             return (
               <li
@@ -85,21 +86,23 @@ export default function Sidebar({
                   </span>
                 </div>
               </li>
-            );
+            )
           })
         ) : (
           /* Эстетичный лог в случае, если по поиску ничего не найдено */
-          <div style={{
-            padding: '20px 12px',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '11px',
-            color: 'var(--text-metrics)',
-            textAlign: 'center'
-          }}>
+          <div
+            style={{
+              padding: '20px 12px',
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '11px',
+              color: 'var(--text-metrics)',
+              textAlign: 'center',
+            }}
+          >
             &gt;&gt; NO_MODULES_MATCH
           </div>
         )}
       </ul>
     </aside>
-  );
+  )
 }

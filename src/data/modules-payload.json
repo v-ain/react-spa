@@ -46,14 +46,8 @@
       {
         "name": "rules.json",
         "type": "code",
-        "lines": [
-          "{",
-          "    \"no-unused-vars\": \"error\",",
-          "    \"no-console\": \"warn\"",
-          "}"
-        ]
+        "lines": ["{", "    \"no-unused-vars\": \"error\",", "    \"no-console\": \"warn\"", "}"]
       }
     ]
   }
 ]
-
